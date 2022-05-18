@@ -41,6 +41,9 @@ namespace MongoExercises
                 case "4":
                     Exercise4();
                     break;
+                case "5":
+                    Exercise5();
+                    break;
                 default:
                     Console.Write("Wybierz obsługiwany typ operacji");
                     break;
@@ -68,16 +71,35 @@ namespace MongoExercises
             Console.WriteLine("Zadanie 4.\n");
 
             var filter = Builders<BsonDocument>.Filter.Eq("startYear", 1920) & 
-                Builders<BsonDocument>.Filter.Eq("genres", "Comedy");
+                Builders<BsonDocument>.Filter.AnyEq("genres", "Comedy");
 
             var titles = Mongo.Title.Find(filter).ToList();
-            foreach (var result in titles.OrderByDescending(x => x.GetValue("runtimeMinutes")))
+            foreach (var result in titles.OrderByDescending(x => x.GetValue("runtimeMinutes") == "\\N" ? -1 : x.GetValue("runtimeMinutes")))
             {
                 Console.WriteLine($"Oryginalny tytuł: {result.GetValue("originalTitle")}");
                 Console.WriteLine($"Czas trwania: {result.GetValue("runtimeMinutes")}");
                 Console.WriteLine($"Kategoria: {result.GetValue("genres")}");
                 Console.WriteLine();
             }
+        }
+
+        public void Exercise5()
+        {
+            Console.WriteLine("Zadanie 5.\n");
+
+            var titleFilter = Builders<BsonDocument>.Filter.Eq("primaryTitle", "Casablanca") &
+                Builders<BsonDocument>.Filter.AnyEq("startYear", 1942);
+            var title = Mongo.Title.Find(titleFilter).First();
+
+            var castFilter = Builders<BsonDocument>.Filter.Eq("tconst", title.GetValue("tconst")) &
+                Builders<BsonDocument>.Filter.AnyEq("category", "director");
+            var cast = Mongo.Cast.Find(castFilter).First();
+
+            var nameFilter = Builders<BsonDocument>.Filter.Eq("nconst", cast.GetValue("nconst"));
+            var name = Mongo.Name.Find(nameFilter).First();
+
+            Console.WriteLine($"Imię i nazwisko: {name.GetValue("primaryName")}");
+            Console.WriteLine($"Data urodzenia: {name.GetValue("birthYear")}");
         }
     }
 }
