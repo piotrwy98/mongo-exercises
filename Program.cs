@@ -47,6 +47,9 @@ namespace MongoExercises
                 case "5":
                     Exercise5();
                     break;
+                case "6":
+                    Exercise6();
+                    break;
                 default:
                     Console.Write("Wybierz obsługiwany typ operacji");
                     break;
@@ -128,6 +131,22 @@ namespace MongoExercises
 
             Console.WriteLine($"Imię i nazwisko: {name.GetValue("primaryName")}");
             Console.WriteLine($"Data urodzenia: {name.GetValue("birthYear")}");
+        }
+
+        public void Exercise6()
+        {
+            Console.WriteLine("Zadanie 6.\n");
+
+            var yearFilter = Builders<BsonDocument>.Filter.Eq("startYear", 2000);
+            var titleTypes = Mongo.Title.Distinct<string>("titleType", yearFilter).ToList();
+            foreach (var type in titleTypes)
+            {
+                var typeFilter = Builders<BsonDocument>.Filter.Eq("titleType", type);
+
+                Console.WriteLine($"Nazwa typu: {type}");
+                Console.WriteLine($"Liczba filmów: {Mongo.Title.CountDocuments(yearFilter & typeFilter)}");
+                Console.WriteLine();
+            }
         }
     }
 }
