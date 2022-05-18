@@ -38,6 +38,9 @@ namespace MongoExercises
                 case "2":
                     Exercise2();
                     break;
+                case "3":
+                    Exercise3();
+                    break;
                 case "4":
                     Exercise4();
                     break;
@@ -64,6 +67,31 @@ namespace MongoExercises
             Console.WriteLine($"Crew: {Mongo.Crew.CountDocuments(x => true)}");
             Console.WriteLine($"Rating: {Mongo.Rating.CountDocuments(x => true)}");
             Console.WriteLine($"Name: {Mongo.Name.CountDocuments(x => true)}");
+        }
+
+        public void Exercise3()
+        {
+            Console.WriteLine("Zadanie 3.\n");
+
+            var filter = Builders<BsonDocument>.Filter.Eq("startYear", 2005) &
+                Builders<BsonDocument>.Filter.AnyEq("genres", "Romance") &
+                Builders<BsonDocument>.Filter.Gt("runtimeMinutes", 90) &
+                Builders<BsonDocument>.Filter.Lte("runtimeMinutes", 120);
+
+            var titles = Mongo.Title.Find(filter).ToList().OrderByDescending(x => x.GetValue("primaryTitle"));
+            var titlesLimited = titles.Take(5);
+
+            foreach (var result in titlesLimited)
+            {
+                Console.WriteLine($"Tytuł filmu: {result.GetValue("primaryTitle")}");
+                Console.WriteLine($"Rok produkcji: {result.GetValue("startYear")}");
+                Console.WriteLine($"Kategoria: {result.GetValue("genres")}");
+                Console.WriteLine($"Czas trwania: {result.GetValue("runtimeMinutes")}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine($"Liczba dokumentów zwrócona przez zapytanie po wyłączeniu ograniczenia: {titles.Count()}");
+            Console.WriteLine();
         }
 
         public void Exercise4()
