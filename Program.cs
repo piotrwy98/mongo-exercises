@@ -1,6 +1,6 @@
-﻿using MongoDB.Driver;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoExercises.Databases;
-using MongoExercises.Models;
 
 namespace MongoExercises
 {
@@ -38,6 +38,9 @@ namespace MongoExercises
                 case "2":
                     Exercise2();
                     break;
+                case "4":
+                    Exercise4();
+                    break;
                 default:
                     Console.Write("Wybierz obsługiwany typ operacji");
                     break;
@@ -53,17 +56,28 @@ namespace MongoExercises
         {
             Console.WriteLine("Zadanie 2.\n");
 
-            var title = Task.Run(async () => await Mongo.GetDocumentsCount(Mongo.Title));
-            var cast = Task.Run(async () => await Mongo.GetDocumentsCount(Mongo.Cast)).Result;
-            var crew = Task.Run(async () => await Mongo.GetDocumentsCount(Mongo.Crew)).Result;
-            var rating = Task.Run(async () => await Mongo.GetDocumentsCount(Mongo.Rating)).Result;
-            var name = Task.Run(async () => await Mongo.GetDocumentsCount(Mongo.Name)).Result;
+            Console.WriteLine($"Title: {Mongo.Title.CountDocuments(x => true)}");
+            Console.WriteLine($"Cast: {Mongo.Cast.CountDocuments(x => true)}");
+            Console.WriteLine($"Crew: {Mongo.Crew.CountDocuments(x => true)}");
+            Console.WriteLine($"Rating: {Mongo.Rating.CountDocuments(x => true)}");
+            Console.WriteLine($"Name: {Mongo.Name.CountDocuments(x => true)}");
+        }
 
-            Console.WriteLine($"Title: {title}");
-            Console.WriteLine($"Cast: {cast}");
-            Console.WriteLine($"Crew: {crew}");
-            Console.WriteLine($"Rating: {rating}");
-            Console.WriteLine($"Name: {name}");
+        public void Exercise4()
+        {
+            Console.WriteLine("Zadanie 4.\n");
+
+            var filter = Builders<BsonDocument>.Filter.Eq("startYear", 1920) & 
+                Builders<BsonDocument>.Filter.Eq("genres", "Comedy");
+
+            var titles = Mongo.Title.Find(filter).ToList();
+            foreach (var result in titles.OrderByDescending(x => x.GetValue("runtimeMinutes")))
+            {
+                Console.WriteLine($"Oryginalny tytuł: {result.GetValue("originalTitle")}");
+                Console.WriteLine($"Czas trwania: {result.GetValue("runtimeMinutes")}");
+                Console.WriteLine($"Kategoria: {result.GetValue("genres")}");
+                Console.WriteLine();
+            }
         }
     }
 }
