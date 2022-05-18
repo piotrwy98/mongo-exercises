@@ -53,6 +53,9 @@ namespace MongoExercises
                 case "8":
                     Exercise8();
                     break;
+                case "10":
+                    Exercise10();
+                    break;
                 default:
                     Console.Write("Wybierz obsługiwany typ operacji");
                     break;
@@ -176,6 +179,24 @@ namespace MongoExercises
                 Console.WriteLine($"Data urodzenia: {name.GetValue("birthYear")}");
                 Console.WriteLine($"Profesja: {name.GetValue("primaryProfession")}");
                 Console.WriteLine();
+            }
+        }
+
+        public void Exercise10()
+        {
+            Console.WriteLine("Zadanie 10.\n");
+
+            var birthYearIndex = Builders<BsonDocument>.IndexKeys.Descending("birthYear");
+            Mongo.Name.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(birthYearIndex));
+
+            var indexes = Mongo.Name.Indexes.List().ToList();
+
+            Console.WriteLine($"Całkowita liczba indeksów: {indexes.Count}");
+            Console.WriteLine();
+
+            foreach (var index in indexes)
+            {
+                Console.WriteLine($"Nazwa indeksu: {index.GetValue("name")}");
             }
         }
     }
