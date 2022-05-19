@@ -56,6 +56,9 @@ namespace MongoExercises
                 case "8":
                     Exercise8();
                     break;
+                case "9":
+                    Exercise9();
+                    break;
                 case "10":
                     Exercise10();
                     break;
@@ -86,7 +89,7 @@ namespace MongoExercises
             Console.WriteLine("Zadanie 3.\n");
 
             var filter = Builders<BsonDocument>.Filter.Eq("startYear", 2005) &
-                Builders<BsonDocument>.Filter.AnyEq("genres", "Romance") &
+                Builders<BsonDocument>.Filter.Regex("genres", new BsonRegularExpression("Romance")) &
                 Builders<BsonDocument>.Filter.Gt("runtimeMinutes", 90) &
                 Builders<BsonDocument>.Filter.Lte("runtimeMinutes", 120);
 
@@ -111,7 +114,7 @@ namespace MongoExercises
             Console.WriteLine("Zadanie 4.\n");
 
             var filter = Builders<BsonDocument>.Filter.Eq("startYear", 1920) & 
-                Builders<BsonDocument>.Filter.AnyEq("genres", "Comedy");
+                Builders<BsonDocument>.Filter.Regex("genres", new BsonRegularExpression("Comedy"));
 
             var titles = Mongo.Title.Find(filter).ToList();
             foreach (var result in titles.OrderByDescending(x => x.GetValue("runtimeMinutes") == "\\N" ? -1 : x.GetValue("runtimeMinutes")))
@@ -162,12 +165,11 @@ namespace MongoExercises
         {
             Console.WriteLine("Zadanie 7.\n");
 
-            var ratingFilter = Builders<BsonDocument>.Filter.Gte("averageRating", 0);
-            var ratings = Mongo.Rating.Find(ratingFilter).ToList();
+            var ratings = Mongo.Rating.Find(x => true).ToList();
 
             var yearFilter = Builders<BsonDocument>.Filter.Gte("startYear", 1994) &
                 Builders<BsonDocument>.Filter.Lte("startYear", 1996) &
-                Builders<BsonDocument>.Filter.AnyEq("genres", "Documentary");
+                Builders<BsonDocument>.Filter.Regex("genres", new BsonRegularExpression("Documentary"));
             var movies = Mongo.Title.Find(yearFilter).ToList();
 
             var list = new[] { new object { } }.ToList();
@@ -212,6 +214,7 @@ namespace MongoExercises
             Console.WriteLine();
             Console.WriteLine($"Liczba zwróconych przez zapytanie dokumentów: {list.Count}");
         }
+
         public void Exercise8()
         {
             Console.WriteLine("Zadanie 8.\n");
@@ -219,8 +222,8 @@ namespace MongoExercises
             var primaryProfessionIndex = Builders<BsonDocument>.IndexKeys.Text("primaryProfession");
             Mongo.Name.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(primaryProfessionIndex));
 
-            var filter = (Builders<BsonDocument>.Filter.AnyEq("primaryProfession", "actor") |
-                Builders<BsonDocument>.Filter.AnyEq("primaryProfession", "director")) &
+            var filter = (Builders<BsonDocument>.Filter.Regex("primaryProfession", new BsonRegularExpression("actor")) |
+                Builders<BsonDocument>.Filter.Regex("primaryProfession", new BsonRegularExpression("actor"))) &
                 Builders<BsonDocument>.Filter.Gte("birthYear", 1950) &
                 Builders<BsonDocument>.Filter.Lte("birthYear", 1990);
 
@@ -236,6 +239,22 @@ namespace MongoExercises
                 Console.WriteLine($"Data urodzenia: {name.GetValue("birthYear")}");
                 Console.WriteLine($"Profesja: {name.GetValue("primaryProfession")}");
                 Console.WriteLine();
+            }
+        }
+
+        public void Exercise9()
+        {
+            Console.WriteLine("Zadanie 9.\n");
+
+            var ratingFilter = Builders<BsonDocument>.Filter.Eq("averageRating", 10);
+            var ratings = Mongo.Rating.Find(ratingFilter).ToList();
+
+            foreach (var rating in ratings)
+            {
+                var movieFilter = Builders<BsonDocument>.Filter.Eq("tconst", rating.GetValue("tconst"));
+                var update = Builders<BsonDocument>.Update.Set("max", (int) 1);
+
+                Mongo.Title.FindOneAndUpdate(movieFilter, update);
             }
         }
 
