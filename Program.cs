@@ -50,6 +50,9 @@ namespace MongoExercises
                 case "6":
                     Exercise6();
                     break;
+                case "7":
+                    Exercise7();
+                    break;
                 default:
                     Console.Write("Wybierz obsługiwany typ operacji");
                     break;
@@ -147,6 +150,61 @@ namespace MongoExercises
                 Console.WriteLine($"Liczba filmów: {Mongo.Title.CountDocuments(yearFilter & typeFilter)}");
                 Console.WriteLine();
             }
+        }
+
+        public void Exercise7()
+        {
+            Console.WriteLine("Zadanie 7.\n");
+
+            var ratingFilter = Builders<BsonDocument>.Filter.Gte("averageRating", 0);
+            var ratings = Mongo.Rating.Find(ratingFilter).ToList();
+
+            var yearFilter = Builders<BsonDocument>.Filter.Gte("startYear", 1994) &
+                Builders<BsonDocument>.Filter.Lte("startYear", 1996) &
+                Builders<BsonDocument>.Filter.AnyEq("genres", "Documentary");
+            var movies = Mongo.Title.Find(yearFilter).ToList();
+
+            var list = new[] { new object { } }.ToList();
+            list.Clear();
+
+            foreach (var movie in movies)
+            {
+                var movieRating = ratings.FirstOrDefault(x => x.GetValue("tconst") == movie.GetValue("tconst"));
+
+                if (movieRating != null)
+                {
+                    var movieWithRating = new {
+                        primaryTitle = movie.GetValue("primaryTitle").ToString(),
+                        startYear = movie.GetValue("startYear").ToInt32(),
+                        rating = movieRating.GetValue("averageRating").RawValue
+                    };
+                    list.Add(movieWithRating);
+                } 
+                else
+                {
+                    var movieWithRating = new
+                    {
+                        primaryTitle = movie.GetValue("primaryTitle").ToString(),
+                        startYear = movie.GetValue("startYear").ToInt32(),
+                        rating = -1.0
+                    };
+                    list.Add(movieWithRating);
+                }
+            }
+
+            list = list.OrderByDescending(x => (x as dynamic).rating).ToList();
+            var listLimited = list.Take(5);
+
+            foreach (var entry in listLimited)
+            {
+                Console.WriteLine($"Tytuł filmu: {(entry as dynamic).primaryTitle}");
+                Console.WriteLine($"Rok produkcji: {(entry as dynamic).startYear}");
+                Console.WriteLine($"Średnia ocena: {(entry as dynamic).rating}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"Liczba zwróconych przez zapytanie dokumentów: {list.Count}");
         }
     }
 }
