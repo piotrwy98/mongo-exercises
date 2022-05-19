@@ -63,7 +63,7 @@ namespace MongoExercises
                     Exercise10();
                     break;
                 default:
-                    Console.Write("Wybierz obsługiwany typ operacji");
+                    Console.WriteLine("Wybierz obsługiwany typ operacji");
                     break;
             }
 
@@ -93,10 +93,9 @@ namespace MongoExercises
                 Builders<BsonDocument>.Filter.Gt("runtimeMinutes", 90) &
                 Builders<BsonDocument>.Filter.Lte("runtimeMinutes", 120);
 
-            var titles = Mongo.Title.Find(filter).ToList().OrderByDescending(x => x.GetValue("primaryTitle"));
-            var titlesLimited = titles.Take(5);
+            var titlesLimited = Mongo.Title.Find(filter).SortBy(x => x["primaryTitle"]).Limit(5);
 
-            foreach (var result in titlesLimited)
+            foreach (var result in titlesLimited.ToList())
             {
                 Console.WriteLine($"Tytuł filmu: {result.GetValue("primaryTitle")}");
                 Console.WriteLine($"Rok produkcji: {result.GetValue("startYear")}");
@@ -105,7 +104,9 @@ namespace MongoExercises
                 Console.WriteLine();
             }
 
-            Console.WriteLine($"Liczba dokumentów zwrócona przez zapytanie po wyłączeniu ograniczenia: {titles.Count()}");
+            var titlesTotalCount = Mongo.Title.CountDocuments(filter);
+
+            Console.WriteLine($"Liczba dokumentów zwrócona przez zapytanie po wyłączeniu ograniczenia: {titlesTotalCount}");
             Console.WriteLine();
         }
 
@@ -116,8 +117,8 @@ namespace MongoExercises
             var filter = Builders<BsonDocument>.Filter.Eq("startYear", 1920) & 
                 Builders<BsonDocument>.Filter.Regex("genres", new BsonRegularExpression("Comedy"));
 
-            var titles = Mongo.Title.Find(filter).ToList();
-            foreach (var result in titles.OrderByDescending(x => x.GetValue("runtimeMinutes") == "\\N" ? -1 : x.GetValue("runtimeMinutes")))
+            var titles = Mongo.Title.Find(filter).SortByDescending(x => x["runtimeMinutes"]);
+            foreach (var result in titles.ToList())
             {
                 Console.WriteLine($"Oryginalny tytuł: {result.GetValue("originalTitle")}");
                 Console.WriteLine($"Czas trwania: {result.GetValue("runtimeMinutes")}");
@@ -223,23 +224,24 @@ namespace MongoExercises
             Mongo.Name.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(primaryProfessionIndex));
 
             var filter = (Builders<BsonDocument>.Filter.Regex("primaryProfession", new BsonRegularExpression("actor")) |
-                Builders<BsonDocument>.Filter.Regex("primaryProfession", new BsonRegularExpression("actor"))) &
+                Builders<BsonDocument>.Filter.Regex("primaryProfession", new BsonRegularExpression("director"))) &
                 Builders<BsonDocument>.Filter.Gte("birthYear", 1950) &
                 Builders<BsonDocument>.Filter.Lte("birthYear", 1990);
 
-            // można po Find(...) uzyć Limit(10)
-            var names = Mongo.Name.Find(filter).ToList();
+            var namesLimited = Mongo.Name.Find(filter).Limit(10);
 
-            Console.WriteLine($"Całkowita liczba dokumentów: {names.Count}");
-            Console.WriteLine();
-
-            foreach (var name in names.Take(10))
+            foreach (var name in namesLimited.ToList())
             {
                 Console.WriteLine($"Imię i nazwisko: {name.GetValue("primaryName")}");
                 Console.WriteLine($"Data urodzenia: {name.GetValue("birthYear")}");
                 Console.WriteLine($"Profesja: {name.GetValue("primaryProfession")}");
                 Console.WriteLine();
             }
+
+            var namesTotalCount = Mongo.Name.CountDocuments(filter);
+
+            Console.WriteLine($"Całkowita liczba dokumentów: {namesTotalCount}");
+            Console.WriteLine();
         }
 
         public void Exercise9()
