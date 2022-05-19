@@ -50,8 +50,14 @@ namespace MongoExercises
                 case "6":
                     Exercise6();
                     break;
-                case "7":
-                    Exercise7();
+				case "7":
+					Exercise7();
+					break;
+                case "8":
+                    Exercise8();
+                    break;
+                case "10":
+                    Exercise10();
                     break;
                 default:
                     Console.Write("Wybierz obsługiwany typ operacji");
@@ -205,6 +211,50 @@ namespace MongoExercises
 
             Console.WriteLine();
             Console.WriteLine($"Liczba zwróconych przez zapytanie dokumentów: {list.Count}");
+        }
+        public void Exercise8()
+        {
+            Console.WriteLine("Zadanie 8.\n");
+
+            var primaryProfessionIndex = Builders<BsonDocument>.IndexKeys.Text("primaryProfession");
+            Mongo.Name.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(primaryProfessionIndex));
+
+            var filter = (Builders<BsonDocument>.Filter.AnyEq("primaryProfession", "actor") |
+                Builders<BsonDocument>.Filter.AnyEq("primaryProfession", "director")) &
+                Builders<BsonDocument>.Filter.Gte("birthYear", 1950) &
+                Builders<BsonDocument>.Filter.Lte("birthYear", 1990);
+
+            // można po Find(...) uzyć Limit(10)
+            var names = Mongo.Name.Find(filter).ToList();
+
+            Console.WriteLine($"Całkowita liczba dokumentów: {names.Count}");
+            Console.WriteLine();
+
+            foreach (var name in names.Take(10))
+            {
+                Console.WriteLine($"Imię i nazwisko: {name.GetValue("primaryName")}");
+                Console.WriteLine($"Data urodzenia: {name.GetValue("birthYear")}");
+                Console.WriteLine($"Profesja: {name.GetValue("primaryProfession")}");
+                Console.WriteLine();
+            }
+        }
+
+        public void Exercise10()
+        {
+            Console.WriteLine("Zadanie 10.\n");
+
+            var birthYearIndex = Builders<BsonDocument>.IndexKeys.Descending("birthYear");
+            Mongo.Name.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(birthYearIndex));
+
+            var indexes = Mongo.Name.Indexes.List().ToList();
+
+            Console.WriteLine($"Całkowita liczba indeksów: {indexes.Count}");
+            Console.WriteLine();
+
+            foreach (var index in indexes)
+            {
+                Console.WriteLine($"Nazwa indeksu: {index.GetValue("name")}");
+            }
         }
     }
 }
